@@ -1,6 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeterReading", "MeterReading\MeterReading.csproj", "{97DFA34A-94E8-4338-85E8-CDC760C1F34F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeterReadingCore", "MeterReadingCore\MeterReadingCore.csproj", "{C332CF8C-B052-4A39-B3C5-8C56B4FF5B09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeterReadingAPI", "MeterReadingAPI\MeterReadingAPI.csproj", "{118CC6F3-6A43-4AE4-86FE-238149F828A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MeterReadingProcessor", "MeterReadingProcessor\MeterReadingProcessor.csproj", "{1E628272-32A9-424E-B7E4-32E2D9B1403A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -8,9 +12,17 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{97DFA34A-94E8-4338-85E8-CDC760C1F34F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{97DFA34A-94E8-4338-85E8-CDC760C1F34F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{97DFA34A-94E8-4338-85E8-CDC760C1F34F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{97DFA34A-94E8-4338-85E8-CDC760C1F34F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C332CF8C-B052-4A39-B3C5-8C56B4FF5B09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C332CF8C-B052-4A39-B3C5-8C56B4FF5B09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C332CF8C-B052-4A39-B3C5-8C56B4FF5B09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C332CF8C-B052-4A39-B3C5-8C56B4FF5B09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{118CC6F3-6A43-4AE4-86FE-238149F828A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{118CC6F3-6A43-4AE4-86FE-238149F828A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{118CC6F3-6A43-4AE4-86FE-238149F828A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{118CC6F3-6A43-4AE4-86FE-238149F828A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E628272-32A9-424E-B7E4-32E2D9B1403A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E628272-32A9-424E-B7E4-32E2D9B1403A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E628272-32A9-424E-B7E4-32E2D9B1403A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E628272-32A9-424E-B7E4-32E2D9B1403A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
