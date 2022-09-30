@@ -169,3 +169,8 @@ Resources:
       FunctionUrlAuthType: "NONE"
       Action: lambda:InvokeFunctionUrl
       Principal: "*"
+
+Outputs:
+  MeterReadingFunctionEndpoint:
+    Description: "URL for the meter reading API"
+    Value: !GetAtt MeterReadingAPIFunctionUrl.FunctionUrl

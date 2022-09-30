@@ -10,13 +10,14 @@ log() {
 log "This script requires docker and aws cli to be present and configured in your path";
 
 ECR_STACK_NAME='meter-reading-ecr';
+CLOUDFORMATION_STACK_NAME='meter-reading-cloudformation';
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text);
 REGION=$(aws configure get region);
 
 log "Using account ${ACCOUNT_ID} in region ${REGION}";
 
 log "Creating/Updating ECR Resources";
-aws cloudformation deploy --template-file ./MeterReadingIaC/aws_ecr.yaml --stack-name meter-reading-ecr --region ${REGION}
+aws cloudformation deploy --template-file ./MeterReadingIaC/aws_ecr.yaml --stack-name ${ECR_STACK_NAME} --region ${REGION}
 
 log "Building MeterReadingAPI";
 docker build -f MeterReaderAPI.Dockerfile . -t meter-reading-api:latest;
@@ -38,3 +39,8 @@ log "Uploading Processor docker image to repository ${ECR_MR_PROCESSOR_URI}";
 docker tag meter-reading-processor:latest ${ECR_MR_PROCESSOR_URI}:latest;
 docker push ${ECR_MR_PROCESSOR_URI}:latest;
 
+log "Creating/Updating CloudFormation Resources";
+aws cloudformation deploy --template-file ./MeterReadingIaC/aws_cloudformation.yaml --stack-name ${CLOUDFORMATION_STACK_NAME} --region ${REGION}
+
+FUNCTION_URL=$(aws cloudformation describe-stacks --region ${REGION} --query "Stacks[?StackName=='${CLOUDFORMATION_STACK_NAME}'][].Outputs[?OutputKey=='MeterReadingFunctionEndpoint'].OutputValue" --output text)
+log "You can access function at ${FUNCTION_URL}"
