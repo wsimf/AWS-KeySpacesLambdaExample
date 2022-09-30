@@ -85,7 +85,7 @@ public sealed class MeterReaderFileListenerService : BackgroundService
                 }
             }
 
-            await DeleteMessage(client, message, cancellationToken).ConfigureAwait(false); // delete invalid message
+            await DeleteMessage(client, message, cancellationToken).ConfigureAwait(false); // delete handled message
         }
     }
 

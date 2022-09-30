@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ECRStackName:
+    Type: String
+    Description: "Name of the Stack handling the ECR resources"
+    Default: "meter-reading-ecr"
+
+Resources:
+  MeterReadingKeySpace: # Keyspace
+    Type: AWS::Cassandra::Keyspace
+    Properties:
+      KeyspaceName: "meter_reading"
+
+  MeterReadingTableName: # Keyspace Table
+    Type: AWS::Cassandra::Table
+    Properties:
+      KeyspaceName: !Ref MeterReadingKeySpace
+      TableName: "meter_reading_values"
+      PartitionKeyColumns:
+        - ColumnName: "date"
+          ColumnType: DATE
+        - ColumnName: "meter_id"
+          ColumnType: TEXT
+      ClusteringKeyColumns:
+        - Column:
+            ColumnName: "time"
+            ColumnType: TIME
+      RegularColumns:
+        - ColumnName: "value"
+          ColumnType: INT
+
+  ConsumptionStoreBucket: # The bucket to upload CSV consumption data
+    Type: AWS::S3::Bucket
+    DependsOn: MeterReadingProcessFunctionInvokePermission
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-meter-readings-raw"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+        IgnorePublicAcls: true
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: "s3:ObjectCreated:*"
+            Function: !GetAtt MeterReadingProcessFunction.Arn
+
+  MeterReadingProcessFunctionRole: # Role for the function which reads CSV from S3 and write it to Keyspaces
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-MeterReadingProcessFunctionRole"
+      Description: "Allow Lambda function to read content in S3 bucket and publish data to Keyspace"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "S3ReadAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "s3:GetObject"
+                Resource: !Sub "arn:aws:s3::::${AWS::AccountId}-meter-readings-raw/*"
+        - PolicyName: "KeyspacesInsertUpdateAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "cassandra:Modify"
+                Resource: !Sub "arn:aws:cassandra:*:${AWS::AccountId}:/keyspace/${MeterReadingKeySpace}/table/meter_reading_values"
+        - PolicyName: "CloudWatchLogAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:CreateLogGroup"
+                Resource: !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:*"
+              - Effect: Allow
+                Action: "logs:PutLogEvents"
+                Resource: !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:*:log-stream:*"
+
+  MeterReadingProcessFunctionInvokePermission: # Allow S3 notifications to invoke the function
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MeterReadingProcessFunction
+      Action: lambda:InvokeFunction
+      Principal: "s3.amazonaws.com"
+      SourceAccount: !Ref "AWS::AccountId"
+      SourceArn: !Sub "arn:aws:s3:::${AWS::AccountId}-meter-readings-raw"
+
+  MeterReadingProcessFunction: # Lambda function to handle CSV files
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "meter-reader-process"
+      Code:
+        ImageUri:
+          Fn::Sub:
+            - "${URI}:latest"
+            - URI:
+                Fn::ImportValue: !Sub "${ECRStackName}-MeterReadingProcessRepository"
+      PackageType: "Image"
+      Role: !GetAtt MeterReadingProcessFunctionRole.Arn
+
+  MeterReadingAPIFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-MeterReadingAPIFunctionRole"
+      Description: "Allow Lambda function to read content in Keyspace"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "KeyspacesReadAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "cassandra:Select"
+                Resource: !Sub "arn:aws:cassandra:*:${AWS::AccountId}:/keyspace/${MeterReadingKeySpace}/table/meter_reading_values"
+        - PolicyName: "CloudWatchLogAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:CreateLogGroup"
+                Resource: !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:*"
+              - Effect: Allow
+                Action: "logs:PutLogEvents"
+                Resource: !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:*:log-stream:*"
+
+  MeterReadingAPIFunction: # Lambda function to handle API
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: "meter-reader-api"
+      Code:
+        ImageUri:
+          Fn::Sub:
+            - "${URI}:latest"
+            - URI:
+                Fn::ImportValue: !Sub "${ECRStackName}-MeterReadingAPIRepositoryUri"
+      PackageType: "Image"
+      Role: !GetAtt MeterReadingAPIFunctionRole.Arn
+
+  MeterReadingAPIFunctionUrl: # Generate function URL to access API
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: "NONE"
+      TargetFunctionArn: !GetAtt MeterReadingAPIFunction.Arn
+
+  MeterReadingAPIFunctionInvokePermission: # Allow unrestricted access to the API function
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref MeterReadingAPIFunction
+      FunctionUrlAuthType: "NONE"
+      Action: lambda:InvokeFunctionUrl
+      Principal: "*"

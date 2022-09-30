@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  DefaultECRLifeCyclePolicy:
+    Type: String
+    Description: "ECR lifecycle policy"
+    Default: |
+      {
+        "rules": [
+        {
+          "rulePriority": 1,
+          "description": "Remove untagged images",
+          "selection": {
+            "tagStatus": "untagged",
+            "countType": "imageCountMoreThan",
+            "countNumber": 1
+          },
+         "action": {
+            "type": "expire"
+          }
+        }]
+      }
+
+Resources:
+  MeterReadingAPIRepository: # Repository for API code
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "meter-reading-api"
+      ImageTagMutability: "MUTABLE"
+      LifecyclePolicy:
+        LifecyclePolicyText: !Ref DefaultECRLifeCyclePolicy
+
+  MeterReadingProcessRepository: # Repository for CSV file processor
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: "meter-reading-processor"
+      ImageTagMutability: "MUTABLE"
+      LifecyclePolicy:
+        LifecyclePolicyText: !Ref DefaultECRLifeCyclePolicy
+
+Outputs:
+  MeterReadingAPIRepositoryUri:
+    Description: "URI for the MeterReadingAPI ECR Repository"
+    Value: !GetAtt MeterReadingAPIRepository.RepositoryUri
+    Export:
+      Name: !Sub "${AWS::StackName}-MeterReadingAPIRepositoryUri"
+
+  MeterReadingProcessRepositoryUri:
+    Description: "URI for the MeterReadingProcess ECR Repository"
+    Value: !GetAtt MeterReadingProcessRepository.RepositoryUri
+    Export:
+      Name: !Sub "${AWS::StackName}-MeterReadingProcessRepository"
