@@ -1,4 +1,5 @@
 using Amazon;
+using Amazon.Lambda.Core;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -9,22 +10,17 @@ namespace MeterReading.Processor.Services.Default;
 
 public sealed class DefaultMeterReaderFileRetrieverService : IMeterReaderFileRetrieverService
 {
-    private readonly ILogger<DefaultMeterReaderFileRetrieverService> _logger;
     private readonly IOptions<AWSOptions> _awsOptions;
 
-    public DefaultMeterReaderFileRetrieverService(ILogger<DefaultMeterReaderFileRetrieverService> logger, IOptions<AWSOptions> awsOptions)
+    public DefaultMeterReaderFileRetrieverService(IOptions<AWSOptions> awsOptions)
     {
-        _logger = logger;
         _awsOptions = awsOptions;
     }
 
     public async Task<Stream> RetrieveFile(string bucketName, string key)
     {
-        var auth = new BasicAWSCredentials(_awsOptions.Value.UserKey, _awsOptions.Value.UserSecret);
-        _logger.LogDebug("Using user key {Account} for S3 Client", auth.GetCredentials().AccessKey);
-
-        var client = new AmazonS3Client(auth, RegionEndpoint.GetBySystemName(_awsOptions.Value.Region));
-        _logger.LogDebug("Retrieving S3 file {Key} from {Bucket}", key, bucketName);
+        AmazonS3Client client = GetClient();
+        LambdaLogger.Log($"Retrieving S3 file {key} from {bucketName}");
 
         var request = new GetObjectRequest
         {
@@ -52,5 +48,24 @@ public sealed class DefaultMeterReaderFileRetrieverService : IMeterReaderFileRet
 
             throw;
         }
+    }
+
+    private AmazonS3Client GetClient()
+    {
+        AWSOptions options = _awsOptions.Value;
+        if (!string.IsNullOrWhiteSpace(options.UserKey) && !string.IsNullOrWhiteSpace(options.UserSecret))
+        {
+            var auth = new BasicAWSCredentials(_awsOptions.Value.UserKey, _awsOptions.Value.UserSecret);
+            LambdaLogger.Log($"Using user key {auth.GetCredentials().AccessKey} for S3 Client");
+
+            return new AmazonS3Client(auth, RegionEndpoint.GetBySystemName(_awsOptions.Value.Region));
+        }
+
+        // UserKey or UserSecret is not required in lambda
+
+        string? region = Environment.GetEnvironmentVariable("AWS_REGION");
+        LambdaLogger.Log($"Using S3 client in {region}");
+
+        return new AmazonS3Client(RegionEndpoint.GetBySystemName(region));
     }
 }

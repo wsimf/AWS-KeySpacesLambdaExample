@@ -1,4 +1,5 @@
 using System.Globalization;
+using Amazon.Lambda.Core;
 using Cassandra;
 using CsvHelper;
 using MeterReading.Core.Extensions;
@@ -12,17 +13,13 @@ public sealed class DefaultMeterFileProcessService : IMeterFileProcessService
     private const string CsvHeaderMeterId = "Meter";
     private const string CsvHeaderDate = "Date";
 
-    private readonly ILogger<DefaultMeterFileProcessService> _logger;
     private readonly IMeterReaderFileRetrieverService _retrieverService;
     private readonly IMeterReadingService _meterReadingService;
 
-    public DefaultMeterFileProcessService(IMeterReaderFileRetrieverService retrieverService,
-        IMeterReadingService meterReadingService,
-        ILogger<DefaultMeterFileProcessService> logger)
+    public DefaultMeterFileProcessService(IMeterReaderFileRetrieverService retrieverService, IMeterReadingService meterReadingService)
     {
         _retrieverService = retrieverService;
         _meterReadingService = meterReadingService;
-        _logger = logger;
     }
 
     public async Task Process(string fileKey, string bucketName)
@@ -46,7 +43,7 @@ public sealed class DefaultMeterFileProcessService : IMeterFileProcessService
         }
 
         await _meterReadingService.AddMeterReadings(readings).ConfigureAwait(false);
-        _logger.LogInformation("{Count} reading(s) processed successfully", readings.Count);
+        LambdaLogger.Log($"{readings.Count} reading(s) processed successfully");
     }
 
     /// <summary>
@@ -54,7 +51,7 @@ public sealed class DefaultMeterFileProcessService : IMeterFileProcessService
     /// </summary>
     /// <param name="record"></param>
     /// <returns></returns>
-    private IEnumerable<MeterReadingValue> GetMeterReadings(IDictionary<string, object> record)
+    private static IEnumerable<MeterReadingValue> GetMeterReadings(IDictionary<string, object> record)
     {
         if (record.TryGetValue(CsvHeaderMeterId, out object? meterId)
             && record.TryGetValue(CsvHeaderDate, out object? date))
@@ -79,19 +76,18 @@ public sealed class DefaultMeterFileProcessService : IMeterFileProcessService
                     }
                     else
                     {
-                        _logger.LogWarning("Unable to process MeterReading - Either reader value or time is invalid. Value: {Value}, Time: {Time}",
-                            value, key);
+                        LambdaLogger.Log($"Unable to process MeterReading - Either reader value or time is invalid. Value: {value}, Time: {key}");
                     }
                 }
             }
             else
             {
-                _logger.LogWarning("Unable to process CSV record - Invalid Date {Date}", date.ToString());
+                LambdaLogger.Log($"Unable to process CSV record - Invalid Date {date}");
             }
         }
         else
         {
-            _logger.LogWarning("Unable to process CSV record - Either MeterId or Date is missing. Row: {@Row}", record);
+            LambdaLogger.Log($"Unable to process CSV record - Either MeterId or Date is missing. Row: {record}");
         }
     }
 }
