@@ -2,7 +2,7 @@ using Cassandra;
 
 namespace MeterReading.Core.Models;
 
-public class MeterReadingValue
+public sealed record MeterReadingValue
 {
     public string MeterId { get; set; } = null!;
     public LocalDate Date { get; set; } = null!;

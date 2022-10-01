@@ -1,7 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
+using Amazon.Lambda.Core;
 using Cassandra;
 using MeterReading.Core.Options;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ISession = Cassandra.ISession;
 
@@ -16,15 +16,13 @@ public sealed class CassandraContext : IDisposable
     public const string ColumnDate = "date";
     public const string ColumnValue = "value";
     public const string ColumnTime = "time";
-
-    private readonly ILogger<CassandraContext> _logger;
+    
     private readonly IOptions<CassandraOptions> _options;
     private ISession? _currentSession;
 
-    public CassandraContext(IOptions<CassandraOptions> options, ILogger<CassandraContext> logger)
+    public CassandraContext(IOptions<CassandraOptions> options)
     {
         _options = options;
-        _logger = logger;
     }
 
     public async Task<RowSet> Execute(IStatement statement)
@@ -66,7 +64,7 @@ CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{TableName} (
     private async ValueTask Execute(string cql)
     {
         _currentSession ??= await Connect().ConfigureAwait(false);
-        _logger.LogDebug("Executing {Cql}", cql);
+        LambdaLogger.Log($"Executing {cql}");
 
         _currentSession.Execute(cql);
     }
@@ -74,7 +72,7 @@ CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{TableName} (
     private Task<ISession> Connect()
     {
         CassandraOptions options = _options.Value;
-        _logger.LogDebug("Connecting to {Server}", options.ContactPoint);
+        LambdaLogger.Log($"Connecting to {options.ContactPoint}");
 
         var certCollection = new X509Certificate2Collection();
         var awsCertificate = new X509Certificate2("sf-class2-root.crt");
@@ -93,7 +91,7 @@ CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{TableName} (
         return cluster.ConnectAsync()
             .ContinueWith(x =>
             {
-                _logger.LogInformation("Connected to {Server} successfully", options.ContactPoint);
+                LambdaLogger.Log($"Connected to {options.ContactPoint} successfully");
                 return x.Result;
             });
     }
