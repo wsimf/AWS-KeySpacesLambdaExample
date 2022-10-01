@@ -65,7 +65,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: "s3:GetObject"
-                Resource: !Sub "arn:aws:s3::::${AWS::AccountId}-meter-readings-raw/*"
+                Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-meter-readings-raw/*"
         - PolicyName: "KeyspacesInsertUpdateAccess"
           PolicyDocument:
             Version: "2012-10-17"
@@ -99,6 +99,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: "meter-reader-process"
+      Timeout: 360
       Code:
         ImageUri:
           Fn::Sub:
@@ -106,6 +107,12 @@ Resources:
             - URI:
                 Fn::ImportValue: !Sub "${ECRStackName}-MeterReadingProcessRepository"
       PackageType: "Image"
+      Environment:
+        Variables:
+          Cassandra__ContactPoint: !Sub "cassandra.${AWS::Region}.amazonaws.com"
+          Cassandra__ContactPort: 9142
+          Cassandra__UserName: "{{resolve:ssm:KeyspaceUserName}}"
+          Cassandra__Password: "{{resolve:ssm:KeyspacePassword}}"
       Role: !GetAtt MeterReadingProcessFunctionRole.Arn
 
   MeterReadingAPIFunctionRole:
@@ -147,6 +154,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: "meter-reader-api"
+      Timeout: 120
       Code:
         ImageUri:
           Fn::Sub:
@@ -154,6 +162,12 @@ Resources:
             - URI:
                 Fn::ImportValue: !Sub "${ECRStackName}-MeterReadingAPIRepositoryUri"
       PackageType: "Image"
+      Environment:
+        Variables:
+          Cassandra__ContactPoint: !Sub "cassandra.${AWS::Region}.amazonaws.com"
+          Cassandra__ContactPort: 9142
+          Cassandra__UserName: "{{resolve:ssm:KeyspaceUserName}}"
+          Cassandra__Password: "{{resolve:ssm:KeyspacePassword}}"
       Role: !GetAtt MeterReadingAPIFunctionRole.Arn
 
   MeterReadingAPIFunctionUrl: # Generate function URL to access API
