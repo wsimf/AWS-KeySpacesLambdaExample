@@ -1,5 +1,5 @@
+using System.Security.Cryptography.X509Certificates;
 using Cassandra;
-using MeterReading.Core.Models;
 using MeterReading.Core.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,6 +10,12 @@ namespace MeterReading.Core.Infrastructure;
 public sealed class CassandraContext : IDisposable
 {
     public const string DefaultKeySpace = "meter_reading";
+
+    public const string TableName = "meter_reading_values";
+    public const string ColumnMeterId = "meter_id";
+    public const string ColumnDate = "date";
+    public const string ColumnValue = "value";
+    public const string ColumnTime = "time";
 
     private readonly ILogger<CassandraContext> _logger;
     private readonly IOptions<CassandraOptions> _options;
@@ -26,13 +32,13 @@ public sealed class CassandraContext : IDisposable
         _currentSession ??= await Connect().ConfigureAwait(false);
         return await _currentSession.ExecuteAsync(statement).ConfigureAwait(false);
     }
-    
+
     public async Task<PreparedStatement> PrepareStatement(string cql)
     {
         _currentSession ??= await Connect().ConfigureAwait(false);
         return await _currentSession.PrepareAsync(cql).ConfigureAwait(false);
     }
-    
+
     public async Task MigrateIfRequired()
     {
         const string keyspace =
@@ -46,12 +52,12 @@ WITH REPLICATION =
         await Execute(keyspace).ConfigureAwait(false);
 
         const string readings = $@"
-CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{nameof(MeterReadingValue)} (
-    {nameof(MeterReadingValue.MeterId)} varchar,
-    {nameof(MeterReadingValue.Date)} date,
-    {nameof(MeterReadingValue.Value)} int,
-    {nameof(MeterReadingValue.Time)} time,
-    PRIMARY KEY (({nameof(MeterReadingValue.MeterId)}, {nameof(MeterReadingValue.Date)}), {nameof(MeterReadingValue.Time)})
+CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{TableName} (
+    {ColumnMeterId} varchar,
+    {ColumnDate} date,
+    {ColumnValue} int,
+    {ColumnTime} time,
+    PRIMARY KEY (({ColumnMeterId}, {ColumnDate}), {ColumnTime})
 )";
 
         await Execute(readings).ConfigureAwait(false);
@@ -70,10 +76,16 @@ CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{nameof(MeterReadingValue)} (
         CassandraOptions options = _options.Value;
         _logger.LogDebug("Connecting to {Server}", options.ContactPoint);
 
+        var certCollection = new X509Certificate2Collection();
+        var awsCertificate = new X509Certificate2("sf-class2-root.crt");
+        
+        certCollection.Add(awsCertificate);
+        
         Cluster? cluster = Cluster.Builder()
             .AddContactPoint(options.ContactPoint)
             .WithPort(options.ContactPort)
             .WithAuthProvider(new PlainTextAuthProvider(options.UserName, options.Password))
+            .WithSSL(new SSLOptions().SetCertificateCollection(certCollection))
             .Build();
 
         ArgumentNullException.ThrowIfNull(cluster);

@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+﻿FROM public.ecr.aws/lambda/dotnet:6 AS base
 WORKDIR /app
 
 EXPOSE 80
