@@ -188,3 +188,7 @@ Outputs:
   MeterReadingFunctionEndpoint:
     Description: "URL for the meter reading API"
     Value: !GetAtt MeterReadingAPIFunctionUrl.FunctionUrl
+
+  MeterReadingBucketEndpoint:
+    Description: "S3 bucket name to upload meter consumption data"
+    Value: !Ref ConsumptionStoreBucket
