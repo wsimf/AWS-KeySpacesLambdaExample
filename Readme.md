@@ -4,6 +4,9 @@ The project demonstrates the following scenario:
 
 The AWS stack is composed of a S3 bucket to store consumption data, two Lambda functions, one for processing files and the other for processing API requests and a Keyspace as the datastore.
 
+![aws-diagram](https://user-images.githubusercontent.com/1941924/193439687-f5449852-5a40-4f5f-a4ba-bdc6e041d317.png)
+
+
 ## Setting up
 
 To set up the infrasructure, you can execute the included `deploy.sh` script (in a `bash` environment). This script requires `docker` and `aws` CLI version 2.8.0 or higher. Please log into the CLI if you haven't already. It will
