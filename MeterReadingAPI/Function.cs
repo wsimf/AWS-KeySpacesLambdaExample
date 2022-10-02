@@ -31,8 +31,8 @@ public class Function
 
         services.Configure<CassandraOptions>(configuration.GetSection(CassandraOptions.SectionName));
 
-        services.AddSingleton<CassandraContext>();
-        services.AddScoped<IMeterReadingService, DefaultMeterReadingService>();
+        services.AddSingleton<ICassandraContext, CassandraContext>();
+        services.AddScoped<IMeterReadingRepository, DefaultMeterReadingRepository>();
 
         _serviceProvider = services.BuildServiceProvider();
 
@@ -68,7 +68,7 @@ public class Function
         context.Logger.LogInformation("HTTP content validated successfully");
 
         using IServiceScope scope = _serviceProvider.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<IMeterReadingService>();
+        var service = scope.ServiceProvider.GetRequiredService<IMeterReadingRepository>();
 
         int sum = await service.CalculateSum(meterId, parsedDate).ConfigureAwait(false);
         var result = new { meterId, date = parsedDate.ToString("dd-MM-yyyy"), sum };

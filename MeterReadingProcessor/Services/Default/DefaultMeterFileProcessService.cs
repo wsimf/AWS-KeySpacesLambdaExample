@@ -14,12 +14,12 @@ public sealed class DefaultMeterFileProcessService : IMeterFileProcessService
     private const string CsvHeaderDate = "Date";
 
     private readonly IMeterReaderFileRetrieverService _retrieverService;
-    private readonly IMeterReadingService _meterReadingService;
+    private readonly IMeterReadingRepository _meterReadingRepository;
 
-    public DefaultMeterFileProcessService(IMeterReaderFileRetrieverService retrieverService, IMeterReadingService meterReadingService)
+    public DefaultMeterFileProcessService(IMeterReaderFileRetrieverService retrieverService, IMeterReadingRepository meterReadingRepository)
     {
         _retrieverService = retrieverService;
-        _meterReadingService = meterReadingService;
+        _meterReadingRepository = meterReadingRepository;
     }
 
     public async Task Process(string fileKey, string bucketName)
@@ -42,7 +42,7 @@ public sealed class DefaultMeterFileProcessService : IMeterFileProcessService
             readings.AddRange(GetMeterReadings(record));
         }
 
-        await _meterReadingService.AddMeterReadings(readings).ConfigureAwait(false);
+        await _meterReadingRepository.AddMeterReadings(readings).ConfigureAwait(false);
         LambdaLogger.Log($"{readings.Count} reading(s) processed successfully");
     }
 

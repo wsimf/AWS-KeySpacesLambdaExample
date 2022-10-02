@@ -1,0 +1,7 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=64b5455b_002Df879_002D4fa6_002D9580_002D8bb8992afd2b/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Test_CalculateSum_NoPagination" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;NUnit3x::397E9AC4-5F63-4D56-A2FE-B98FC1A11F3D::net6.0::MeterReadingTest.DefaultMeterReadingServiceTests.Test_CalculateSum&lt;/TestId&gt;
+    &lt;TestId&gt;NUnit3x::397E9AC4-5F63-4D56-A2FE-B98FC1A11F3D::net6.0::MeterReadingTest.DefaultMeterFileProcessServiceTests.Test_CSVFileHandle&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

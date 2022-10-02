@@ -32,9 +32,9 @@ public class Function
         services.Configure<CassandraOptions>(configuration.GetSection(CassandraOptions.SectionName));
         services.Configure<AWSOptions>(configuration.GetSection(AWSOptions.SectionName));
 
-        services.AddSingleton<CassandraContext>();
+        services.AddSingleton<ICassandraContext, CassandraContext>();
 
-        services.AddScoped<IMeterReadingService, DefaultMeterReadingService>();
+        services.AddScoped<IMeterReadingRepository, DefaultMeterReadingRepository>();
         services.AddScoped<IMeterFileProcessService, DefaultMeterFileProcessService>();
         services.AddScoped<IMeterReaderFileRetrieverService, DefaultMeterReaderFileRetrieverService>();
         services.AddScoped<IMeterReaderFileHandlerService, DefaultMeterReaderFileHandlerService>();

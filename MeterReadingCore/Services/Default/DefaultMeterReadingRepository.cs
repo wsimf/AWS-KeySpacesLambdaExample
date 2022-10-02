@@ -5,7 +5,7 @@ using MeterReading.Core.Models;
 
 namespace MeterReading.Core.Services.Default;
 
-public sealed class DefaultMeterReadingService : IMeterReadingService
+public sealed class DefaultMeterReadingRepository : IMeterReadingRepository
 {
     private const string CqlCalculateSum =
         $"SELECT {CassandraContext.ColumnValue} FROM {CassandraContext.DefaultKeySpace}.{CassandraContext.TableName} WHERE {CassandraContext.ColumnMeterId}=? AND {CassandraContext.ColumnDate}=?";
@@ -13,9 +13,9 @@ public sealed class DefaultMeterReadingService : IMeterReadingService
     private const string CqlInsertMeterReading =
         $"INSERT INTO {CassandraContext.DefaultKeySpace}.{CassandraContext.TableName} ({CassandraContext.ColumnMeterId}, {CassandraContext.ColumnDate}, {CassandraContext.ColumnTime}, {CassandraContext.ColumnValue}) VALUES (?, ?, ?, ?)";
 
-    private readonly CassandraContext _context;
+    private readonly ICassandraContext _context;
 
-    public DefaultMeterReadingService(CassandraContext context)
+    public DefaultMeterReadingRepository(ICassandraContext context)
     {
         _context = context;
     }
@@ -50,14 +50,15 @@ public sealed class DefaultMeterReadingService : IMeterReadingService
         BoundStatement? statement = pendingStatement.Bind(meterId, new LocalDate(date.Year, date.Month, date.Day));
 
         ArgumentNullException.ThrowIfNull(statement);
+        statement.SetConsistencyLevel(ConsistencyLevel.LocalQuorum); // assuming data reliability > performance
 
         var results = new List<int>();
 
-        RowSet result = await _context.Execute(statement).ConfigureAwait(false);
+        using RowSet result = await _context.Execute(statement).ConfigureAwait(false);
         do
         {
             results.AddRange(result.Select(r => r.GetValue<int>(CassandraContext.ColumnValue)));
-            
+
             await result.FetchMoreResultsAsync().ConfigureAwait(false);
         } while (!result.IsFullyFetched);
 

@@ -7,7 +7,7 @@ using ISession = Cassandra.ISession;
 
 namespace MeterReading.Core.Infrastructure;
 
-public sealed class CassandraContext : IDisposable
+public sealed class CassandraContext : ICassandraContext, IDisposable
 {
     public const string DefaultKeySpace = "meter_reading";
 
@@ -16,7 +16,7 @@ public sealed class CassandraContext : IDisposable
     public const string ColumnDate = "date";
     public const string ColumnValue = "value";
     public const string ColumnTime = "time";
-    
+
     private readonly IOptions<CassandraOptions> _options;
     private ISession? _currentSession;
 
@@ -76,9 +76,9 @@ CREATE TABLE IF NOT EXISTS {DefaultKeySpace}.{TableName} (
 
         var certCollection = new X509Certificate2Collection();
         var awsCertificate = new X509Certificate2("sf-class2-root.crt");
-        
+
         certCollection.Add(awsCertificate);
-        
+
         Cluster? cluster = Cluster.Builder()
             .AddContactPoint(options.ContactPoint)
             .WithPort(options.ContactPort)
