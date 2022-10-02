@@ -1,5 +1,3 @@
-The project demonstrates the following scenario:
-
 ## Stack
 
 The AWS stack is composed of a S3 bucket to store consumption data, two Lambda functions, one for processing files and the other for processing API requests and a Keyspace as the datastore.
@@ -66,3 +64,10 @@ This is a bare bones implementation demonstrating the use case of consuming CSV 
 AWS Keyspaces (based on Apache Cassandra) was selected as the datastore because of the requirement to process high amounts of data. Cassandra enables processing data at high speeds for applications that require low latency compared to the traditional RDBMS systems. However, it has higher management overhead due to denormalisation of data (as opposed to normalisation in RDBMS). This denormalisation enables high-speed read/write queries at the expense of data duplication. Since only a single query (sum of total consumption per meter per day) is used, this limitation is negligible at the current stage. However, it may become an issue if the project were to evolve.
 
 AWS Lambda was used to host both .NET projects processing CSV data and API requests. Moving it to ECS (Fargate or self-managed) or EKS may be best if more requirements are needed. Both these projects are containarised with only minor changes required to convert those into full-blown ASP.NET or .NET background worker projects.
+
+## CloudWatch Logs
+#### Processor
+<img width="1563" alt="CleanShot 2022-10-02 at 18 40 44" src="https://user-images.githubusercontent.com/1941924/193439846-a94ce72b-630d-4134-b30e-93d02e33c202.png">
+
+#### API
+<img width="1544" alt="CleanShot 2022-10-02 at 18 42 17" src="https://user-images.githubusercontent.com/1941924/193439865-98920feb-58fa-4f41-8d64-3cfba3b20d3c.png">
